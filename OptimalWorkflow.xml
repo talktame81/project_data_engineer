@@ -1,0 +1,188 @@
+<workflow-app xmlns = "uri:oozie:workflow:0.2" name = "OptimalWorkflow">
+<start to = "credit_card_sqoop_job"/>
+
+	<!--Credit Card Table-->
+
+	<action name="credit_card_sqoop_job">
+		<sqoop xmlns="uri:oozie:sqoop-action:0.2">
+			<job-tracker>${jobTracker}</job-tracker>
+			<name-node>${nameNode}</name-node>
+			<prepare>
+				<delete path="${nameNode}/Credit_Card_System/CDW_SAPP_F_CREDIT_CARD"/>
+			</prepare>
+			<configuration>
+				<property>
+					<name>mapred.job.queue.name</name>
+					<value>${queueName}</value>
+				</property>
+			</configuration>
+			<!-- WARNING: PLEASE MAKE SURE THAT THE METASTORE IS RUNNING ON PORT 16000 -->
+			<command>job --meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop --exec updatecreditcardtable_optimal</command>
+			<archive>/user/oozie/share/lib/lib_20161025075203/sqoop/java-json.jar#java-json.jar</archive>
+		</sqoop>
+		<ok to="credit_card_hive_script"/>
+		<error to = "kill_credit_card_sqoop_job"/>
+	</action>
+	
+	<action name = "credit_card_hive_script">
+		<hive xmlns = "uri:oozie:hive-action:0.4">
+			<job-tracker>${jobTracker}</job-tracker>
+			<name-node>${nameNode}</name-node>
+			<script>${nameNode}/Credit_Card_System/updatecreditcardtable_hive.sql</script>
+		</hive>
+		<ok to = "branch_sqoop_job" />
+		<error to = "kill_credit_card_hive" />
+	</action>	
+	
+	<kill name = "kill_credit_card_sqoop_job">
+		<message>Sqoop job failed</message>
+	</kill>
+	
+	<kill name = "kill_credit_card_hive">
+		<message>The Hive Node Failed</message>
+	</kill>	
+	
+	
+	
+	<!-- Branch Table -->
+	
+	<action name="branch_sqoop_job">
+		<sqoop xmlns="uri:oozie:sqoop-action:0.2">
+			<job-tracker>${jobTracker}</job-tracker>
+			<name-node>${nameNode}</name-node>
+			<prepare>
+				<delete path="${nameNode}/Credit_Card_System/CDW_SAPP_D_BRANCH"/>
+			</prepare>
+			<configuration>
+				<property>
+					<name>mapred.job.queue.name</name>
+					<value>${queueName}</value>
+				</property>
+			</configuration>
+			<!-- WARNING: PLEASE MAKE SURE THAT THE METASTORE IS RUNNING ON PORT 16000 -->
+			<command>job --meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop --exec updatebranchtable_optimal</command>
+			<archive>/user/oozie/share/lib/lib_20161025075203/sqoop/java-json.jar#java-json.jar</archive>
+		</sqoop>
+		<ok to="branch_hive_script"/>
+		<error to = "kill_branch_sqoop_job"/>
+	</action>		
+   <action name = "branch_hive_script">
+      <hive xmlns = "uri:oozie:hive-action:0.4">
+			<job-tracker>${jobTracker}</job-tracker>
+			<name-node>${nameNode}</name-node>
+			<script>${nameNode}/Credit_Card_System/updatebranchtable_hive.sql</script>
+      </hive>
+      <ok to = "customer_sqoop_job" />
+      <error to = "kill_branch_hive" />
+  </action>
+	<kill name = "kill_branch_sqoop_job">
+      <message>Sqoop job failed</message>
+   </kill>
+   <kill name = "kill_branch_hive">
+      <message>Something went wrong with hive </message>
+   </kill>
+	
+	
+	<!-- Customer Table -->
+	
+<action name="customer_sqoop_job">
+		<sqoop xmlns="uri:oozie:sqoop-action:0.2">
+			<job-tracker>${jobTracker}</job-tracker>
+			<name-node>${nameNode}</name-node>
+			<prepare>
+				<delete path="${nameNode}/Credit_Card_System/CDW_SAPP_D_CUSTOMER"/>
+			</prepare>
+			<configuration>
+				<property>
+					<name>mapred.job.queue.name</name>
+					<value>${queueName}</value>
+				</property>
+			</configuration>
+			<!-- WARNING: PLEASE MAKE SURE THAT THE METASTORE IS RUNNING ON PORT 16000 -->
+			<command>job --meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop --exec updatecustomertable_optimal</command>
+			<archive>/user/oozie/share/lib/lib_20161025075203/sqoop/java-json.jar#java-json.jar</archive>
+		</sqoop>
+		<ok to="customer_hive_script"/>
+		<error to = "kill_customer_sqoop_job"/>
+	</action>		
+
+	<action name = "customer_hive_script">
+		<hive xmlns = "uri:oozie:hive-action:0.4">
+			<job-tracker>${jobTracker}</job-tracker>
+			<name-node>${nameNode}</name-node>
+			<script>${nameNode}/Credit_Card_System/updatecustomertable_hive.sql</script>
+		</hive>
+		<ok to = "time_sqoop_job" />
+		<error to = "kill_customer_hive" />
+	</action>
+
+	<kill name = "kill_customer_sqoop_job">
+		<message>Sqoop job failed</message>
+	</kill>
+
+	<kill name = "kill_customer_hive">
+		<message>Something went wrong with hive </message>
+	</kill>
+
+	
+	
+<!-- Time Table -->
+
+	<action name="time_sqoop_job">
+		<sqoop xmlns="uri:oozie:sqoop-action:0.2">
+			<job-tracker>${jobTracker}</job-tracker>
+			<name-node>${nameNode}</name-node>
+			<prepare>
+				<delete path="${nameNode}/Credit_Card_System/CDW_SAPP_D_TIME"/>
+			</prepare>
+			<configuration>
+				<property>
+					<name>mapred.job.queue.name</name>
+					<value>${queueName}</value>
+				</property>
+			</configuration>
+			<!-- WARNING: PLEASE MAKE SURE THAT THE METASTORE IS RUNNING ON PORT 16000 -->
+			<command>job --meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop --exec updatetimetable_optimal</command>
+			<archive>/user/oozie/share/lib/lib_20161025075203/sqoop/java-json.jar#java-json.jar</archive>
+		</sqoop>
+		<ok to="time_hive_script"/>
+		<error to = "kill_time_sqoop_job"/>
+	</action>
+
+	<action name = "time_hive_script">
+		<hive xmlns = "uri:oozie:hive-action:0.4">
+			<job-tracker>${jobTracker}</job-tracker>
+			<name-node>${nameNode}</name-node>
+			<script>${nameNode}/Credit_Card_System/updatetimetable_hive.sql</script>
+		</hive>
+		<ok to = "Delete_Temporary_Files" />
+		<error to = "kill_time_hive" />
+	</action>
+
+	<kill name = "kill_time_sqoop_job">
+		<message>Sqoop job failed</message>
+	</kill>
+
+	<kill name = "kill_time_hive">
+		<message>Something went wrong with hive </message>
+	</kill>
+
+	
+	
+	<action name="Delete_Temporary_Files">
+		<fs>
+			<delete path="${nameNode}/Credit_Card_System/CDW_SAPP_F_CREDIT_CARD"/>
+			<delete path="${nameNode}/Credit_Card_System/CDW_SAPP_D_BRANCH"/>
+			<delete path="${nameNode}/Credit_Card_System/CDW_SAPP_D_CUSTOMER"/>
+			<delete path="${nameNode}/Credit_Card_System/CDW_SAPP_D_TIME"/>
+		</fs>
+		<ok to="end"/>
+		<error to="kill_delete_dirs"/>
+	</action>
+	
+	<kill name = "kill_delete_dirs">
+		<message>Could not delete directories</message>
+	</kill>
+	
+	<end name = "end" />
+</workflow-app>

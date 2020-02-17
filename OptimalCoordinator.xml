@@ -1,0 +1,14 @@
+<coordinator-app xmlns = "uri:oozie:coordinator:0.2" name = "Optimized_Case_Study_Coordinator"
+ frequency = "${F}"  start= "${S}" end="${E}" timezone="${Z}" >   
+   <controls>
+      <timeout>1</timeout>
+      <concurrency>1</concurrency>
+      <execution>FIFO</execution>
+      <throttle>1</throttle>
+   </controls>
+      <action>
+      <workflow>
+         <app-path>${nameNode}/Credit_Card_System/OptimalWorkflow.xml</app-path>
+      </workflow>
+   </action>
+</coordinator-app>
